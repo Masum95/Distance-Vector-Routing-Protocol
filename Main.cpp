@@ -27,7 +27,7 @@ void initializeRouter(string myIPAddress, string topoFileName)
 				nbrIP = addrOfRouter2;
 			else
 				nbrIP = addrOfRouter1;
-			myNeighbor.setEdge(nbrIP, linkCost, UP);
+			myNeighbor.setEdge(nbrIP, linkCost);
 			neighbourList[nbrIP] = myNeighbor;
 			neighborSet.insert(nbrIP);
 			routingTableMap[nbrIP] = RoutingTableEntry(nbrIP, nbrIP, linkCost);
