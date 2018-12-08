@@ -37,10 +37,10 @@ public:
   int ttl;
   Edge(){}
 
-  Edge(string nbr,int cost,int status){
+  Edge(string nbr,int cost){
     neighbor = nbr , this->cost = cost , ttl = 3 ;
   }
-  void setEdge(string nbr,int cost,int status){
+  void setEdge(string nbr,int cost){
     neighbor = nbr , this->cost = cost , ttl = 3;
   }
 };
