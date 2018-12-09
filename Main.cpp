@@ -195,6 +195,7 @@ void updateLinkStatus()
 	map<string, Edge>::iterator it;
 	for (it = neighbourList.begin(); it != neighbourList.end(); it++)
 	{
+		string neighborIPAddress = it->first;
 		if ((it->second).ttl != 0)
 		{
 			(it->second).ttl--;
@@ -202,9 +203,16 @@ void updateLinkStatus()
 
 		if ((it->second).ttl == 0) // If i didn't receive table for 3 consecutive cycle
 		{
-			if (routingTableMap[it->first].nextHop == it->first)  // if neighbor is reached via this edge, make the cost of edge infintiy.
-																  // if neighbor is reached via some other node, don't alter routing table 
-				routingTableMap[it->first] = RoutingTableEntry(it->first, "-", INF);
+			map<string, RoutingTableEntry>::iterator it2;
+			for (it2 = routingTableMap.begin(); it2 != routingTableMap.end(); it2++)
+			{
+				if (routingTableMap[it2->first].nextHop == neighborIPAddress) // if goal is reached via this edge, make the cost of edge infintiy.
+																	 // if goal is reached via some other node, don't alter routing table
+
+				{
+					routingTableMap[it->first] = RoutingTableEntry(it->first, "-", INF);
+				}
+			}
 		}
 	}
 }
@@ -214,10 +222,11 @@ void processTABLE_RECEIVECommand(string data)
 	vector<string> msgParts = stringSplit(data, ' ');
 	string neighborIPAddress = msgParts[1];
 
-	if (neighbourList[neighborIPAddress].ttl == 0) // if the edge has been down 
-	{
-		routingTableMap[neighborIPAddress] = RoutingTableEntry(neighborIPAddress, neighborIPAddress, neighbourList[neighborIPAddress].cost);
-	}
+	// if (neighbourList[neighborIPAddress].ttl == 0) // if the edge has been down
+	// {
+	// 	routingTableMap[neighborIPAddress] = RoutingTableEntry(neighborIPAddress, neighborIPAddress, neighbourList[neighborIPAddress].cost);
+	// }
+
 	neighbourList[neighborIPAddress].ttl = MAX_TTL;
 	for (int i = 2; i < msgParts.size(); i++)
 	{
@@ -228,20 +237,23 @@ void processTABLE_RECEIVECommand(string data)
 		if (nextHop == myRouterIPAddress || dest == myRouterIPAddress)
 			continue;
 		string resNextHop; // which nextHop to follow to reache the goal
-		if(routingTableMap[neighborIPAddress].cost<neighbourList[neighborIPAddress].cost){  // is cost to reach the node, stored in routing table, is less than the direct cost?
-																							// cost in routing table may not be less than the direct edge cost in the case when
-																							// some of the edge of the previous optimal path has been down , and then the neighbor gets unreachable via that route
-																							// So then direct edge cost is less than the routing table cost
+		if (routingTableMap[neighborIPAddress].cost < neighbourList[neighborIPAddress].cost)
+		{ // is cost to reach the node, stored in routing table, is less than the direct cost?
+			// cost in routing table may not be less than the direct edge cost in the case when
+			// some of the edge of the previous optimal path has been down , and then the neighbor gets unreachable via that route
+			// So then direct edge cost is less than the routing table cost
 
 			resNextHop = routingTableMap[neighborIPAddress].nextHop;
-		}else{
+		}
+		else
+		{
 			resNextHop = neighborIPAddress;
 		}
-		int resCost = addEdgeCost(min(routingTableMap[neighborIPAddress].cost,neighbourList[neighborIPAddress].cost), costFromNeighbor);
+		int resCost = addEdgeCost(min(routingTableMap[neighborIPAddress].cost, neighbourList[neighborIPAddress].cost), costFromNeighbor);
 
 		if (routingTableMap[dest].cost > resCost || routingTableMap[dest].nextHop == neighborIPAddress) // second condition checks if the neighbor is the only way to reach the destination ,
 																										// then update the cost even if it is greater than the routing table cost
-																										// this scenario may arise when cost between neighbor and goal has been increased 
+																										// this scenario may arise when cost between neighbor and goal has been increased
 																										// so cost from this current node must be forcefully updated. That is previous less cost to reach the goal
 																										// is now invalid as the path cost has been modified
 		{
@@ -258,7 +270,7 @@ void receiveCommands()
 	{
 		char *buffer = receiveMessage();
 		string data(buffer);
-		
+
 		if (data != "") // not empty message
 		{
 
@@ -292,6 +304,7 @@ void receiveCommands()
 		}
 	}
 }
+
 
 int main(int argc, char const *argv[])
 {
